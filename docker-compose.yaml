@@ -1,0 +1,81 @@
+version: '3.4'
+services:
+  app:
+    container_name: syspass-app
+    hostname: pass
+    domainname: evismo.ch
+    image: syspass/syspass:3.1.2-php7.2
+    restart: always
+    expose:
+      - "80"
+      - "443"
+    volumes:
+      - type: volume
+        source: syspass-config
+        target: /var/www/html/sysPass/app/config
+      - type: volume
+        source: syspass-backup
+        target: /var/www/html/sysPass/app/backup
+    environment:
+      - COMPOSER_EXTENSIONS=syspass/plugin-authenticator:v2.1
+      - USE_SSL=yes
+    labels:
+      - traefik.docker.network=proxy
+      - traefik.enable=true
+      - traefik.http.routers.pass-redir.entrypoints=web
+      - traefik.http.routers.pass-redir.middlewares=redirect-websecure@file
+      - traefik.http.routers.pass-redir.rule=Host(`pass.evismo.ch`)
+      - traefik.http.routers.pass.entrypoints=websecure
+      - traefik.http.routers.pass.middlewares=hsts@file
+      - traefik.http.routers.pass.rule=Host(`pass.evismo.ch`)
+      - traefik.http.routers.pass.tls=true
+      - traefik.http.routers.pass.tls.certresolver=letsencrypt
+      - traefik.http.services.pass.loadbalancer.server.port=443
+      - traefik.http.services.pass.loadbalancer.server.scheme=https
+    networks:
+      - proxy
+      - private
+  db:
+    container_name: syspass-db
+    hostname: syspass-db
+    restart: always
+    image: mariadb:10.2
+    environment:
+      - MYSQL_ROOT_PASSWORD=syspass
+    expose:
+      - "3306"
+    volumes:
+      - type: volume
+        source: syspass-db
+        target: /var/lib/mysql
+    networks:
+      - private
+  adminer:
+    container_name: syspass-adminer
+    image: adminer
+    restart: always
+    expose:
+      - "8080"
+    # ports:
+    #   - target: 8080
+    #     published: 8080
+    #     protocol: tcp
+    labels:
+      - traefik.docker.network=proxy
+      - traefik.enable=true
+      - traefik.http.routers.adminer.entrypoints=web
+      - traefik.http.routers.adminer.rule=Host(`adminer.pass.evismo.ch`)
+      - traefik.http.services.adminer.loadbalancer.server.port=8080
+    networks:
+      - proxy
+      - private
+
+volumes:
+  syspass-config: {}
+  syspass-backup: {}
+  syspass-db: {}
+
+networks:
+  private:
+  proxy:
+    external: true

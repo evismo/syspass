@@ -1,3 +1,6 @@
+## do not commit secret files
+*.secrets
+
 ## Core latex/pdflatex auxiliary files:
 *.aux
 *.lof
@@ -274,3 +277,5 @@ TSWLatexianTemp*
 
 # Makeindex log files
 *.lpz
+
+backups/

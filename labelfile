@@ -1,0 +1,5 @@
+traefik.http.routers.syspass.rule=Host(`pass.evismo.ch`)
+traefik.http.routers.syspass.tls=true
+traefik.http.routers.syspass.tls.certresolver=le
+traefik.enable=true
+traefik.http.services.syspass.loadbalancer.server.port=80
